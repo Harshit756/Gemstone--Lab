@@ -1,37 +1,33 @@
 import QRCode from 'qrcode'
-import fs from 'fs'
-import path from 'path'
+import { put } from '@vercel/blob'
 
 export async function generateQRCode(uniqueId: string): Promise<string> {
   try {
+    // Generate QR Code as Data URL
     const qrCodeDataURL = await QRCode.toDataURL(uniqueId, {
       width: 300,
       margin: 2,
       color: {
         dark: '#000000',
-        light: '#FFFFFF'
-      }
+        light: '#FFFFFF',
+      },
     })
 
     // Convert data URL to buffer
     const base64Data = qrCodeDataURL.replace(/^data:image\/png;base64,/, '')
     const buffer = Buffer.from(base64Data, 'base64')
 
-    // Create filename and path
+    // Create filename
     const filename = `qr-${uniqueId}.png`
-    const filepath = path.join(process.cwd(), 'public', 'qrcodes', filename)
 
-    // Ensure directory exists
-    const qrDir = path.join(process.cwd(), 'public', 'qrcodes')
-    if (!fs.existsSync(qrDir)) {
-      fs.mkdirSync(qrDir, { recursive: true })
-    }
+    // Upload to Vercel Blob
+    const { url } = await put(filename, buffer, {
+      access: 'public',
+      contentType: 'image/png',
+    })
 
-    // Write file
-    fs.writeFileSync(filepath, buffer)
-
-    // Return relative path for database storage
-    return `/qrcodes/${filename}`
+    // Return public URL (instead of local /public path)
+    return url
   } catch (error) {
     console.error('Error generating QR code:', error)
     throw new Error('Failed to generate QR code')
