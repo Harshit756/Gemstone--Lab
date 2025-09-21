@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  role     String @default("staff")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Packet {
+  id            Int       @id @default(autoincrement())
+  uniqueId      String    @unique
+  customerName  String
+  contactNumber String
+  gemstoneType  String
+  dateReceived  DateTime  @default(now())
+  qrCodePath    String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  tests         Test[]
+  reports       Report[]
+}
+
+model Test {
+  id           Int      @id @default(autoincrement())
+  packetId     Int
+  color        String?  
+  cut          String?  
+  clarity      String?  
+  carat        String?  
+  authenticity String?  
+  notes        String?  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  packet       Packet   @relation(fields: [packetId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id        Int      @id @default(autoincrement())
+  packetId  Int
+  pdfPath   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  packet    Packet   @relation(fields: [packetId], references: [id], onDelete: Cascade)
+}
