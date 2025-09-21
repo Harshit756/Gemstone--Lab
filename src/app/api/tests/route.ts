@@ -64,11 +64,11 @@ export async function POST(request: NextRequest) {
       await prisma.report.create({ data: { packetId: parseInt(packetId), pdfPath } })
       return NextResponse.json({ test, reportGenerated: true, message: 'Test results saved and report generated successfully' })
     } catch (pdfError) {
-      console.error('PDF generation error:', pdfError?.message || pdfError)
+      console.error('PDF generation error:', pdfError)
       return NextResponse.json({ test, reportGenerated: false, message: 'Test results saved but report generation failed' })
     }
   } catch (error) {
-    console.error('Test creation error:', error?.message || error)
+    console.error('Test creation error:', error)
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ tests })
   } catch (error) {
-    console.error('Error fetching tests:', error?.message || error)
+    console.error('Error fetching tests:', error)
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }

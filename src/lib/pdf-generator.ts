@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, StandardFonts, Page } from 'pdf-lib'
+import { PDFDocument, rgb, StandardFonts, PDFPage } from 'pdf-lib'
 import fs from 'fs'
 import path from 'path'
 
@@ -18,7 +18,7 @@ async function embedImage(pdfDoc: PDFDocument, imagePath: string) {
 }
 
 // ---------- Section Header ----------
-function drawSectionHeader(page: Page, text: string, x: number, y: number, font: any) {
+function drawSectionHeader(page: PDFPage, text: string, x: number, y: number, font: any) {
   const textWidth = font.widthOfTextAtSize(text, 13)
   y -= 30
   page.drawText(text, { x, y, size: 13, font, color: rgb(0, 0, 0.7) })
@@ -33,7 +33,7 @@ function drawSectionHeader(page: Page, text: string, x: number, y: number, font:
 
 // ---------- Wrapped Field ----------
 function drawWrappedField(
-  page: Page,
+  page: PDFPage,
   label: string,
   value: any,
   x: number,
@@ -57,7 +57,7 @@ function drawWrappedField(
 }
 
 // ---------- Notes with Wrapping ----------
-function drawNotes(page: Page, notes: string, x: number, y: number, font: any, maxWidth: number) {
+function drawNotes(page: PDFPage, notes: string, x: number, y: number, font: any, maxWidth: number) {
   const displayValue = notes ? String(notes) : '-'
   const lineHeight = 14
   let lineY = y
@@ -82,8 +82,8 @@ function drawNotes(page: Page, notes: string, x: number, y: number, font: any, m
   return lineY - lineHeight
 }
 
-// ---------- Safe Y Position + Page Break ----------
-function addNewPage(pdfDoc: PDFDocument, pages: Page[]): Page {
+// ---------- Safe Y Position + PDFPage Break ----------
+function addNewPage(pdfDoc: PDFDocument, pages: PDFPage[]): PDFPage {
   const newPage = pdfDoc.addPage([595.28, 841.89])
   pages.push(newPage)
   return newPage
@@ -99,7 +99,7 @@ export async function generateReportPDF(data: any): Promise<string> {
   try {
     const reportType = data.reportType || 'gemstone'
     const pdfDoc = await PDFDocument.create()
-    const pages: Page[] = [pdfDoc.addPage([595.28, 841.89])]
+    const pages: PDFPage[] = [pdfDoc.addPage([595.28, 841.89])]
     let page = pages[0]
     const { width, height } = page.getSize()
 
@@ -110,7 +110,7 @@ export async function generateReportPDF(data: any): Promise<string> {
     const FIELD_WIDTH = width - LEFT_MARGIN - 60
     const BOTTOM_MARGIN = 100
 
-    // === Header (First Page Only) ===
+    // === Header (First PDFPage Only) ===
     const logoPath = path.join(process.cwd(), 'public', 'logo.jpeg')
     if (fs.existsSync(logoPath)) {
       const logoImage = await embedImage(pdfDoc, logoPath)
@@ -254,7 +254,7 @@ export async function generateReportPDF(data: any): Promise<string> {
     yPos = drawSectionHeader(page, 'Notes', LEFT_MARGIN, yPos, boldFont)
     yPos = drawNotes(page, data.test.notes, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
 
-    // === Footer for Each Page ===
+    // === Footer for Each PDFPage ===
     pages.forEach((pg, idx) => {
       pg.drawRectangle({
         x: 20,
@@ -285,7 +285,7 @@ export async function generateReportPDF(data: any): Promise<string> {
         font,
       })
 
-      pg.drawText(`Page ${idx + 1} of ${pages.length}`, {
+      pg.drawText(`PDFPage ${idx + 1} of ${pages.length}`, {
         x: width / 2 - 40,
         y: 28,
         size: 10,
