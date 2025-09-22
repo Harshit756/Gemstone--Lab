@@ -24,6 +24,7 @@ export async function generateQRCode(uniqueId: string): Promise<string> {
     const { url } = await put(filename, buffer, {
       access: 'public',
       contentType: 'image/png',
+      token: process.env.VERCEL_BLOB_READ_WRITE_TOKEN
     })
 
     // Return public URL (instead of local /public path)
