@@ -1,20 +1,21 @@
 import { PDFDocument, rgb, StandardFonts, PDFPage } from 'pdf-lib'
-import fs from 'fs'
-import path from 'path'
+import { put } from '@vercel/blob'
+
 
 // ---------- Helper to embed PNG/JPG ----------
-async function embedImage(pdfDoc: PDFDocument, imagePath: string) {
-  const imageBytes = fs.readFileSync(imagePath)
+async function embedImageFromUrl(pdfDoc: PDFDocument, url: string) {
+  const res = await fetch(url)
+  const imageBytes = new Uint8Array(await res.arrayBuffer())
   const isPng =
     imageBytes[0] === 0x89 &&
     imageBytes[1] === 0x50 &&
     imageBytes[2] === 0x4e &&
     imageBytes[3] === 0x47
   const isJpg = imageBytes[0] === 0xff && imageBytes[1] === 0xd8
-
   if (isPng) return await pdfDoc.embedPng(imageBytes)
   if (isJpg) return await pdfDoc.embedJpg(imageBytes)
-  throw new Error(`Unsupported image format: ${imagePath}`)
+  throw new Error(`Unsupported image format from URL: ${url}`)
+
 }
 
 // ---------- Section Header ----------
@@ -111,9 +112,8 @@ export async function generateReportPDF(data: any): Promise<string> {
     const BOTTOM_MARGIN = 100
 
     // === Header (First PDFPage Only) ===
-    const logoPath = path.join(process.cwd(), 'public', 'logo.jpeg')
-    if (fs.existsSync(logoPath)) {
-      const logoImage = await embedImage(pdfDoc, logoPath)
+    if (data.logoUrl) {
+      const logoImage = await embedImageFromUrl(pdfDoc, data.logoUrl)
       const dims = logoImage.scale(1)
       const scale = Math.min(160 / dims.width, 60 / dims.height)
       page.drawImage(logoImage, {
@@ -167,19 +167,17 @@ export async function generateReportPDF(data: any): Promise<string> {
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
     })
+
     if (data.uploadedImage) {
-      const imgPath = path.join(process.cwd(), 'public', data.uploadedImage)
-      if (fs.existsSync(imgPath)) {
-        const gemImage = await embedImage(pdfDoc, imgPath)
-        const dims = gemImage.scale(1)
-        const scale = Math.min(136 / dims.width, 136 / dims.height)
-        page.drawImage(gemImage, {
-          x: width - 180 + (136 - dims.width * scale) / 2,
-          y: photoBoxY + (136 - dims.height * scale) / 2,
-          width: dims.width * scale,
-          height: dims.height * scale,
-        })
-      }
+      const gemImage = await embedImageFromUrl(pdfDoc, data.uploadedImage)
+      const dims = gemImage.scale(1)
+      const scale = Math.min(136 / dims.width, 136 / dims.height)
+      page.drawImage(gemImage, {
+        x: width - 180 + (136 - dims.width * scale) / 2,
+        y: photoBoxY + (136 - dims.height * scale) / 2,
+        width: dims.width * scale,
+        height: dims.height * scale,
+      })
     }
 
     // === Sections ===
@@ -255,7 +253,8 @@ export async function generateReportPDF(data: any): Promise<string> {
     yPos = drawNotes(page, data.test.notes, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
 
     // === Footer for Each PDFPage ===
-    pages.forEach((pg, idx) => {
+    for (let idx = 0; idx < pages.length; idx++) {
+      const pg = pages[idx]
       pg.drawRectangle({
         x: 20,
         y: 20,
@@ -264,14 +263,10 @@ export async function generateReportPDF(data: any): Promise<string> {
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
       })
-
-      if (data.qrCodePath) {
-        const qrPath = path.join(process.cwd(), 'public', data.qrCodePath)
-        if (fs.existsSync(qrPath)) {
-          embedImage(pdfDoc, qrPath).then(qrImage => {
-            pg.drawImage(qrImage, { x: 40, y: 30, width: 60, height: 60 })
-          })
-        }
+      console.log(data)
+      if (data.qrCodeUrl) {
+        const qrImage = await embedImageFromUrl(pdfDoc,data.qrCodeUrl)
+        pg.drawImage(qrImage, { x: 40, y: 30, width: 60, height: 60 })
       }
 
       const sigName = 'Preeti Jhalani'
@@ -293,30 +288,32 @@ export async function generateReportPDF(data: any): Promise<string> {
         color: rgb(0.3, 0.3, 0.3),
       })
 
-      if (fs.existsSync(logoPath)) {
-        embedImage(pdfDoc, logoPath).then(logoImage => {
-          const dims = logoImage.scale(1)
-          const scale = Math.min(350 / dims.width, 350 / dims.height)
-          pg.drawImage(logoImage, {
-            x: width / 2 - (dims.width * scale) / 2,
-            y: height / 2 - (dims.height * scale) / 2,
-            width: dims.width * scale,
-            height: dims.height * scale,
-            opacity: 0.06,
-          })
+      if (data.logoUrl) {
+        const logoImage = await embedImageFromUrl(pdfDoc, data.logoUrl)
+        const dims = logoImage.scale(1)
+        const scale = Math.min(350 / dims.width, 350 / dims.height)
+        pg.drawImage(logoImage, {
+          x: width / 2 - (dims.width * scale) / 2,
+          y: height / 2 - (dims.height * scale) / 2,
+          width: dims.width * scale,
+          height: dims.height * scale,
+          opacity: 0.06,
         })
       }
+    }
+
+    // === Save & Upload to Vercel Blob ===
+    const pdfBytes = await pdfDoc.save()
+    const buffer = Buffer.from(pdfBytes) // <-- FIX: convert Uint8Array to Buffer
+    const filename = `${reportType}-report-${data.packet.uniqueId}-${Date.now()}.pdf`
+
+    const { url } = await put(filename, buffer, {
+      access: 'public',
+      contentType: 'application/pdf',
+      token: process.env.BLOB_READ_WRITE_TOKEN, // make sure this is set
     })
 
-    // === Save ===
-    const pdfBytes = await pdfDoc.save()
-    const filename = `${reportType}-report-${data.packet.uniqueId}-${Date.now()}.pdf`
-    const reportsDir = path.join(process.cwd(), 'public', 'reports')
-    if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir, { recursive: true })
-    const filepath = path.join(reportsDir, filename)
-    fs.writeFileSync(filepath, pdfBytes)
-
-    return `/reports/${filename}`
+    return url
   } catch (error) {
     console.error('Error generating PDF report:', error)
     throw new Error('Failed to generate PDF report')

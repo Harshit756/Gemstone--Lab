@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { requireAuth } from '@/lib/requireAuth'
+import { put } from '@vercel/blob'
 
 export async function POST(request: NextRequest) {
   const user = requireAuth(request)
@@ -24,13 +24,13 @@ export async function POST(request: NextRequest) {
     const fileExtension = path.extname(file.name)
     const filename = `gemstone-${timestamp}${fileExtension}`
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-    await mkdir(uploadsDir, { recursive: true })
+    // Save directly to Vercel Blob Storage
+    const { url } = await put(filename, buffer, {
+      access: 'public',
+      contentType: file.type,
+    })
 
-    const filepath = path.join(uploadsDir, filename)
-    await writeFile(filepath, buffer)
-
-    return NextResponse.json({ success: true, filename, url: `/uploads/${filename}`, message: 'File uploaded successfully' })
+    return NextResponse.json({ success: true, filename, url, message: 'File uploaded successfully' })
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
