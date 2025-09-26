@@ -69,8 +69,8 @@ const dropdowns: Record<string, string[]> = {
 // ---------------- Field mapping ---------------- //
 const reportFields: Record<string, string[]> = {
   gemstone: [
-    'species', 'variety', 'origin', 'weight', 'measurements', 'transparency', 'shape',
-    'dimension', 'opticCharacter', 'refractiveIndex', 'specificGravity', 'magnification', 'notes'
+   'shape','cut', 'dimension', 'weight', 'color', 'transparency', 'opticCharacter', 'refractiveIndex', 'specificGravity',  
+   'magnification', 'species',  'variety', 'notes' 
   ],
   diamond: [
     'carat', 'cut', 'color', 'clarity', 'measurements', 'cutGrade', 'colorGrade',

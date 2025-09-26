@@ -186,28 +186,16 @@ export default function PacketEntryPage() {
               <label htmlFor="gemstoneType" className="block text-sm font-medium text-gray-700 mb-1">
                 Gemstone Type
               </label>
-              <select
+              <input
                 id="gemstoneType"
                 name="gemstoneType"
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={formData.gemstoneType}
                 onChange={handleInputChange}
-              >
-                <option value="">Select gemstone type</option>
-                <option value="Diamond">Diamond</option>
-                <option value="Ruby">Ruby</option>
-                <option value="Sapphire">Sapphire</option>
-                <option value="Emerald">Emerald</option>
-                <option value="Amethyst">Amethyst</option>
-                <option value="Topaz">Topaz</option>
-                <option value="Garnet">Garnet</option>
-                <option value="Peridot">Peridot</option>
-                <option value="Citrine">Citrine</option>
-                <option value="Aquamarine">Aquamarine</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+                placeholder="Enter Gemstone type"
+              />
+            </div>     
 
             {error && (
               <div className="text-red-600 text-sm text-center">{error}</div>

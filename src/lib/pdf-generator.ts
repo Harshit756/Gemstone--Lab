@@ -1,7 +1,6 @@
 import { PDFDocument, rgb, StandardFonts, PDFPage } from 'pdf-lib'
 import { put } from '@vercel/blob'
 
-
 // ---------- Helper to embed PNG/JPG ----------
 async function embedImageFromUrl(pdfDoc: PDFDocument, url: string) {
   const res = await fetch(url)
@@ -15,7 +14,6 @@ async function embedImageFromUrl(pdfDoc: PDFDocument, url: string) {
   if (isPng) return await pdfDoc.embedPng(imageBytes)
   if (isJpg) return await pdfDoc.embedJpg(imageBytes)
   throw new Error(`Unsupported image format from URL: ${url}`)
-
 }
 
 // ---------- Section Header ----------
@@ -83,7 +81,7 @@ function drawNotes(page: PDFPage, notes: string, x: number, y: number, font: any
   return lineY - lineHeight
 }
 
-// ---------- Safe Y Position + PDFPage Break ----------
+// ---------- Safe Y Position + Page Break ----------
 function addNewPage(pdfDoc: PDFDocument, pages: PDFPage[]): PDFPage {
   const newPage = pdfDoc.addPage([595.28, 841.89])
   pages.push(newPage)
@@ -93,7 +91,59 @@ function addNewPage(pdfDoc: PDFDocument, pages: PDFPage[]): PDFPage {
 // ---------- Estimate Section Height ----------
 function estimateSectionHeight(fields: [string, any][]): number {
   const lineHeight = 14
-  return 45 + fields.length * lineHeight // 45 for header + spacing
+  return 45 + fields.length * lineHeight
+}
+
+// ---------- Report Field Config ----------
+const REPORT_FIELDS: Record<string, [string, [string, string][]][]> = {
+  gemstone: [
+    [
+      'Basic Information',
+      [
+        ['Shape', 'shape'],
+        ['Cut', 'cut'],
+        ['Weight', 'weight'],
+        ['Color', 'color'],
+        ['Dimension', 'dimension'],
+     
+      ],
+    ],
+    [
+      'Measurements & Physical Properties',
+      [
+        ['Transparency', 'transparency'],
+        ['Optic Character', 'opticCharacter'],
+        ['Refractive Index', 'refractiveIndex'],
+        ['Specific Gravity', 'specificGravity'],
+        ['Magnification', 'magnification'],
+        ['Species', 'species'],
+        ['Variety', 'variety'],
+      ],
+    ],
+  ],
+  diamond: [
+    [
+      'Grading',
+      [
+        ['Color Grade', 'colorGrade'],
+        ['Clarity Grade', 'clarityGrade'],
+        ['Cut Grade', 'cutGrade'],
+        ['Polish', 'polish'],
+        ['Symmetry', 'symmetry'],
+        ['Fluorescence', 'fluorescence'],
+      ],
+    ],
+  ],
+  origin: [
+    [
+      'Species & Origin',
+      [
+        ['Species', 'species'],
+        ['Variety', 'variety'],
+        ['Origin', 'origin'],
+      ],
+    ],
+  ],
 }
 
 export async function generateReportPDF(data: any): Promise<string> {
@@ -111,7 +161,7 @@ export async function generateReportPDF(data: any): Promise<string> {
     const FIELD_WIDTH = width - LEFT_MARGIN - 60
     const BOTTOM_MARGIN = 100
 
-    // === Header (First PDFPage Only) ===
+    // === Header (First Page Only) ===
     if (data.logoUrl) {
       const logoImage = await embedImageFromUrl(pdfDoc, data.logoUrl)
       const dims = logoImage.scale(1)
@@ -140,7 +190,7 @@ export async function generateReportPDF(data: any): Promise<string> {
       color: rgb(0, 0, 0),
     })
 
-    // Report Info Box
+    // === Always show basic info box ===
     page.drawRectangle({
       x: 30,
       y: height - 240,
@@ -157,7 +207,7 @@ export async function generateReportPDF(data: any): Promise<string> {
     const dateWidth = font.widthOfTextAtSize(dateText, 12)
     page.drawText(dateText, { x: width - 60 - dateWidth, y: infoY, size: 12, font })
 
-    // Photo Box
+    // === Always show photo box ===
     const photoBoxY = height - 420
     page.drawRectangle({
       x: width - 180,
@@ -167,7 +217,6 @@ export async function generateReportPDF(data: any): Promise<string> {
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
     })
-
     if (data.uploadedImage) {
       const gemImage = await embedImageFromUrl(pdfDoc, data.uploadedImage)
       const dims = gemImage.scale(1)
@@ -180,56 +229,9 @@ export async function generateReportPDF(data: any): Promise<string> {
       })
     }
 
-    // === Sections ===
+    // === Dynamic Sections ===
     let yPos = height - 280
-
-    const sections: [string, [string, any][]][] = [
-      [
-        'Basic Information',
-        [
-          ['Color', data.test.color],
-          ['Cut', data.test.cut],
-          ['Clarity', data.test.clarity],
-          ['Carat', data.test.carat],
-          ['Authenticity', data.test.authenticity],
-        ],
-      ],
-      [
-        'Measurements & Physical Properties',
-        [
-          ['Measurements', data.test.measurements],
-          ['Weight', data.test.weight],
-          ['Dimension', data.test.dimension],
-          ['Shape', data.test.shape],
-          ['Transparency', data.test.transparency],
-          ['Cutting Style (Crown)', data.test.cuttingStyleCrown],
-          ['Cutting Style (Pavilion)', data.test.cuttingStylePavilion],
-          ['Optic Character', data.test.opticCharacter],
-          ['Refractive Index', data.test.refractiveIndex],
-          ['Specific Gravity', data.test.specificGravity],
-          ['Magnification', data.test.magnification],
-        ],
-      ],
-      [
-        'Species & Origin',
-        [
-          ['Species', data.test.species],
-          ['Variety', data.test.variety],
-          ['Origin', data.test.origin],
-        ],
-      ],
-      [
-        'Grading',
-        [
-          ['Color Grade', data.test.colorGrade],
-          ['Clarity Grade', data.test.clarityGrade],
-          ['Cut Grade', data.test.cutGrade],
-          ['Polish', data.test.polish],
-          ['Symmetry', data.test.symmetry],
-          ['Fluorescence', data.test.fluorescence],
-        ],
-      ],
-    ]
+    const sections = REPORT_FIELDS[reportType] || []
 
     for (const [section, fields] of sections) {
       const sectionHeight = estimateSectionHeight(fields)
@@ -238,21 +240,24 @@ export async function generateReportPDF(data: any): Promise<string> {
         yPos = height - 80
       }
       yPos = drawSectionHeader(page, section, LEFT_MARGIN, yPos, boldFont)
-      for (const [label, value] of fields) {
+
+      for (const [label, key] of fields) {
+        const value = data.test[key]
         yPos = drawWrappedField(page, label, value, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
       }
     }
 
-    // Notes at End
-    const notesHeight = 100
-    if (yPos - notesHeight < BOTTOM_MARGIN) {
-      page = addNewPage(pdfDoc, pages)
-      yPos = height - 80
+    // === Notes only if provided ===
+    if (data.test.notes) {
+      if (yPos - 100 < BOTTOM_MARGIN) {
+        page = addNewPage(pdfDoc, pages)
+        yPos = height - 80
+      }
+      yPos = drawSectionHeader(page, 'Notes', LEFT_MARGIN, yPos, boldFont)
+      yPos = drawNotes(page, data.test.notes, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
     }
-    yPos = drawSectionHeader(page, 'Notes', LEFT_MARGIN, yPos, boldFont)
-    yPos = drawNotes(page, data.test.notes, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
 
-    // === Footer for Each PDFPage ===
+    // === Footer (every page) ===
     for (let idx = 0; idx < pages.length; idx++) {
       const pg = pages[idx]
       pg.drawRectangle({
@@ -263,9 +268,8 @@ export async function generateReportPDF(data: any): Promise<string> {
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
       })
-      console.log(data)
       if (data.qrCodeUrl) {
-        const qrImage = await embedImageFromUrl(pdfDoc,data.qrCodeUrl)
+        const qrImage = await embedImageFromUrl(pdfDoc, data.qrCodeUrl)
         pg.drawImage(qrImage, { x: 40, y: 30, width: 60, height: 60 })
       }
 
@@ -280,7 +284,7 @@ export async function generateReportPDF(data: any): Promise<string> {
         font,
       })
 
-      pg.drawText(`PDFPage ${idx + 1} of ${pages.length}`, {
+      pg.drawText(`Page ${idx + 1} of ${pages.length}`, {
         x: width / 2 - 40,
         y: 28,
         size: 10,
@@ -302,15 +306,15 @@ export async function generateReportPDF(data: any): Promise<string> {
       }
     }
 
-    // === Save & Upload to Vercel Blob ===
+    // === Save & Upload ===
     const pdfBytes = await pdfDoc.save()
-    const buffer = Buffer.from(pdfBytes) // <-- FIX: convert Uint8Array to Buffer
+    const buffer = Buffer.from(pdfBytes)
     const filename = `${reportType}-report-${data.packet.uniqueId}-${Date.now()}.pdf`
 
     const { url } = await put(filename, buffer, {
       access: 'public',
       contentType: 'application/pdf',
-      token: process.env.BLOB_READ_WRITE_TOKEN, // make sure this is set
+      token: process.env.BLOB_READ_WRITE_TOKEN,
     })
 
     return url
