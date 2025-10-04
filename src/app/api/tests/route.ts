@@ -8,10 +8,10 @@ export async function POST(request: NextRequest) {
   const user = requireAuth(request)
 
   const {
-    packetId, reportType, color, cut, clarity, carat, authenticity, notes,
+    packetId, reportType, color, cut, clarity, carat, authenticity, notes, remark,
     measurements, weight, cuttingStyleCrown, cuttingStylePavilion,
     transparency, shape, dimension, opticCharacter, refractiveIndex,
-    specificGravity, magnification, species, variety, origin, colorGrade,
+    specificGravity, magnification, species, variety, origin, colorGrade, beirefringence,
     clarityGrade, cutGrade, polish, symmetry, fluorescence, uploadedImage
   } = await request.json()
 
@@ -31,9 +31,9 @@ export async function POST(request: NextRequest) {
    // notes: notes || null,
     notes:JSON.stringify({
       // 👈 make sure you added a `details Json` field in your Prisma schema
-      measurements, weight, cuttingStyleCrown, cuttingStylePavilion,
+      measurements, weight, cuttingStyleCrown, cuttingStylePavilion, remark,
       transparency, shape, dimension, opticCharacter, refractiveIndex,
-      specificGravity, magnification, species, variety, origin,
+      specificGravity, magnification, species, variety, origin,beirefringence,
       colorGrade, clarityGrade, cutGrade, polish, symmetry, fluorescence,
       reportType,notes
     })
@@ -51,10 +51,10 @@ export async function POST(request: NextRequest) {
           dateReceived: packet.dateReceived
         },
         test: {
-          color, cut, clarity, carat, authenticity, notes, measurements,
+          color, cut, clarity, carat, authenticity, notes, remark, measurements,
           weight, cuttingStyleCrown, cuttingStylePavilion, transparency,
           shape, dimension, opticCharacter, refractiveIndex, specificGravity,
-          magnification, species, variety, origin, colorGrade, clarityGrade,
+          magnification, species, variety, origin, colorGrade, clarityGrade, beirefringence,
           cutGrade, polish, symmetry, fluorescence
         },
         qrCodeUrl: packet.qrCodePath,

@@ -183,7 +183,7 @@ export default function SearchPage() {
                         </div>
                         {packet.tests[0].notes && (
                           <div className="md:col-span-2 lg:col-span-3">
-                            <span className="font-semibold">Notes:</span> {packet.tests[0].notes}
+                            <span className="font-semibold">Conclusion:</span> {packet.tests[0].notes}
                           </div>
                         )}
                       </div>

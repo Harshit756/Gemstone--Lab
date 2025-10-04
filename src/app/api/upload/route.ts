@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     const { url } = await put(filename, buffer, {
       access: 'public',
       contentType: file.type,
+      token: process.env.VERCEL_BLOB_READ_WRITE_TOKEN
     })
 
     return NextResponse.json({ success: true, filename, url, message: 'File uploaded successfully' })

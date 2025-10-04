@@ -109,15 +109,18 @@ const REPORT_FIELDS: Record<string, [string, [string, string][]][]> = {
       ],
     ],
     [
-      'Measurements & Physical Properties',
+      'Optical & Physical Properties',
       [
         ['Transparency', 'transparency'],
         ['Optic Character', 'opticCharacter'],
         ['Refractive Index', 'refractiveIndex'],
-        ['Specific Gravity', 'specificGravity'],
+        ['Beirefringence', 'beirefringence'],
         ['Magnification', 'magnification'],
+        ['Specific Gravity', 'specificGravity'],
         ['Species', 'species'],
         ['Variety', 'variety'],
+        ['Origin', 'origin'],
+  
       ],
     ],
   ],
@@ -229,23 +232,38 @@ export async function generateReportPDF(data: any): Promise<string> {
       })
     }
 
-    // === Dynamic Sections ===
-    let yPos = height - 280
-    const sections = REPORT_FIELDS[reportType] || []
+// === Dynamic Sections ===
+let yPos = height - 280
+const sections = REPORT_FIELDS[reportType] || []
 
-    for (const [section, fields] of sections) {
-      const sectionHeight = estimateSectionHeight(fields)
-      if (yPos - sectionHeight < BOTTOM_MARGIN) {
-        page = addNewPage(pdfDoc, pages)
-        yPos = height - 80
-      }
-      yPos = drawSectionHeader(page, section, LEFT_MARGIN, yPos, boldFont)
-
-      for (const [label, key] of fields) {
-        const value = data.test[key]
-        yPos = drawWrappedField(page, label, value, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
-      }
+for (const [section, fields] of sections) {
+  // Only draw section if at least one field has data
+  const sectionHasData = fields.some(([_, key]) => {
+    if (key === 'origin') {
+      return !!data.test.origin
     }
+    return !!data.test[key]
+  })
+  if (!sectionHasData) continue
+
+  const sectionHeight = estimateSectionHeight(fields)
+  if (yPos - sectionHeight < BOTTOM_MARGIN) {
+    page = addNewPage(pdfDoc, pages)
+    yPos = height - 80
+  }
+
+  yPos = drawSectionHeader(page, section, LEFT_MARGIN, yPos, boldFont)
+
+  for (const [label, key] of fields) {
+    // Skip Origin field if it has no value
+    if (key === 'origin' && !data.test.origin) continue
+
+    const value = data.test[key]
+    if (value) {
+      yPos = drawWrappedField(page, label, value, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
+    }
+  }
+}
 
     // === Notes only if provided ===
     if (data.test.notes) {
@@ -253,10 +271,18 @@ export async function generateReportPDF(data: any): Promise<string> {
         page = addNewPage(pdfDoc, pages)
         yPos = height - 80
       }
-      yPos = drawSectionHeader(page, 'Notes', LEFT_MARGIN, yPos, boldFont)
+      yPos = drawSectionHeader(page, 'Conclusion', LEFT_MARGIN, yPos, boldFont)
       yPos = drawNotes(page, data.test.notes, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
     }
 
+     if (data.test.remark) {
+      if (yPos - 100 < BOTTOM_MARGIN) {
+        page = addNewPage(pdfDoc, pages)
+        yPos = height - 80
+      }
+      yPos = drawSectionHeader(page, 'Remark', LEFT_MARGIN, yPos, boldFont)
+      yPos = drawNotes(page, data.test.remark, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
+    }
     // === Footer (every page) ===
     for (let idx = 0; idx < pages.length; idx++) {
       const pg = pages[idx]

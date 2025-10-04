@@ -24,6 +24,7 @@ interface TestData {
   carat?: string
   authenticity?: string
   notes?: string
+  remark?: string
   measurements?: string
   weight?: string
   cuttingStyleCrown?: string
@@ -44,6 +45,7 @@ interface TestData {
   polish?: string
   symmetry?: string
   fluorescence?: string
+  beirefringence?: string
 }
 
 interface Props {
@@ -52,10 +54,6 @@ interface Props {
 
 // ---------------- Dropdown values ---------------- //
 const dropdowns: Record<string, string[]> = {
-  color: ['Red', 'Blue', 'Green', 'Yellow', 'White', 'Black', 'Pink', 'Other'],
-  cut: ['Round', 'Princess', 'Emerald', 'Oval', 'Radiant', 'Pear', 'Cushion', 'Marquise', 'Asscher', 'Heart'],
-  clarity: ['IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'I1', 'I2', 'I3'],
-  authenticity: ['Natural', 'Synthetic', 'Treated', 'Unknown'],
   transparency: ['Transparent', 'Translucent', 'Opaque'],
   opticCharacter: ['Uniaxial', 'Biaxial', 'Isotropic'],
   fluorescence: ['None', 'Faint', 'Medium', 'Strong', 'Very Strong'],
@@ -69,9 +67,10 @@ const dropdowns: Record<string, string[]> = {
 // ---------------- Field mapping ---------------- //
 const reportFields: Record<string, string[]> = {
   gemstone: [
-   'shape','cut', 'dimension', 'weight', 'color', 'transparency', 'opticCharacter', 'refractiveIndex', 'specificGravity',  
-   'magnification', 'species',  'variety', 'notes' 
+   'shape','cut', 'dimension', 'weight', 'color', 'transparency', 'opticCharacter', 'refractiveIndex', 'beirefringence', 'specificGravity',  
+   'magnification', 'species',  'variety', 'origin' ,'notes' , 'remark' 
   ],
+  
   diamond: [
     'carat', 'cut', 'color', 'clarity', 'measurements', 'cutGrade', 'colorGrade',
     'clarityGrade', 'polish', 'symmetry', 'fluorescence', 'notes'
