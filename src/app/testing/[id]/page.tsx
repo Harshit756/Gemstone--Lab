@@ -54,7 +54,7 @@ interface Props {
 
 // ---------------- Dropdown values ---------------- //
 const dropdowns: Record<string, string[]> = {
-  transparency: ['Transparent', 'Translucent', 'Opaque'],
+  transparency: ['Transparent', 'Semi - Transparent', 'Translucent','Semi - Translucent', 'Opaque'],
   opticCharacter: ['Uniaxial', 'Biaxial', 'Isotropic'],
   fluorescence: ['None', 'Faint', 'Medium', 'Strong', 'Very Strong'],
   cutGrade: ['Excellent', 'Very Good', 'Good', 'Fair', 'Poor'],
