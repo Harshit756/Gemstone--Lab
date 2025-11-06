@@ -105,7 +105,6 @@ const REPORT_FIELDS: Record<string, [string, [string, string][]][]> = {
         ['Weight', 'weight'],
         ['Color', 'color'],
         ['Dimension', 'dimension'],
-     
       ],
     ],
     [
@@ -120,7 +119,6 @@ const REPORT_FIELDS: Record<string, [string, [string, string][]][]> = {
         ['Species', 'species'],
         ['Variety', 'variety'],
         ['Origin', 'origin'],
-  
       ],
     ],
   ],
@@ -168,7 +166,7 @@ export async function generateReportPDF(data: any): Promise<string> {
     if (data.logoUrl) {
       const logoImage = await embedImageFromUrl(pdfDoc, data.logoUrl)
       const dims = logoImage.scale(1)
-      const scale = Math.min(160 / dims.width, 60 / dims.height)
+      const scale = Math.min(300 / dims.width, 85 / dims.height)
       page.drawImage(logoImage, {
         x: (width - dims.width * scale) / 2,
         y: height - 100,
@@ -193,7 +191,18 @@ export async function generateReportPDF(data: any): Promise<string> {
       color: rgb(0, 0, 0),
     })
 
-    // === Always show basic info box ===
+    // === Contact Number (Header Right) ===
+    const contactText = 'Contact No: 9079698209'
+    const contactWidth = font.widthOfTextAtSize(contactText, 10)
+    page.drawText(contactText, {
+      x: width - contactWidth - 40,
+      y: height - 70,
+      size: 10,
+      font,
+      color: rgb(0.3, 0.3, 0.3),
+    })
+
+    // === Info Box ===
     page.drawRectangle({
       x: 30,
       y: height - 240,
@@ -210,7 +219,7 @@ export async function generateReportPDF(data: any): Promise<string> {
     const dateWidth = font.widthOfTextAtSize(dateText, 12)
     page.drawText(dateText, { x: width - 60 - dateWidth, y: infoY, size: 12, font })
 
-    // === Always show photo box ===
+    // === Photo Box ===
     const photoBoxY = height - 420
     page.drawRectangle({
       x: width - 180,
@@ -232,40 +241,37 @@ export async function generateReportPDF(data: any): Promise<string> {
       })
     }
 
-// === Dynamic Sections ===
-let yPos = height - 280
-const sections = REPORT_FIELDS[reportType] || []
+    // === Dynamic Sections ===
+    let yPos = height - 280
+    const sections = REPORT_FIELDS[reportType] || []
 
-for (const [section, fields] of sections) {
-  // Only draw section if at least one field has data
-  const sectionHasData = fields.some(([_, key]) => {
-    if (key === 'origin') {
-      return !!data.test.origin
+    for (const [section, fields] of sections) {
+      const sectionHasData = fields.some(([_, key]) => {
+        if (key === 'origin') {
+          return !!data.test.origin
+        }
+        return !!data.test[key]
+      })
+      if (!sectionHasData) continue
+
+      const sectionHeight = estimateSectionHeight(fields)
+      if (yPos - sectionHeight < BOTTOM_MARGIN) {
+        page = addNewPage(pdfDoc, pages)
+        yPos = height - 80
+      }
+
+      yPos = drawSectionHeader(page, section, LEFT_MARGIN, yPos, boldFont)
+
+      for (const [label, key] of fields) {
+        if (key === 'origin' && !data.test.origin) continue
+        const value = data.test[key]
+        if (value) {
+          yPos = drawWrappedField(page, label, value, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
+        }
+      }
     }
-    return !!data.test[key]
-  })
-  if (!sectionHasData) continue
 
-  const sectionHeight = estimateSectionHeight(fields)
-  if (yPos - sectionHeight < BOTTOM_MARGIN) {
-    page = addNewPage(pdfDoc, pages)
-    yPos = height - 80
-  }
-
-  yPos = drawSectionHeader(page, section, LEFT_MARGIN, yPos, boldFont)
-
-  for (const [label, key] of fields) {
-    // Skip Origin field if it has no value
-    if (key === 'origin' && !data.test.origin) continue
-
-    const value = data.test[key]
-    if (value) {
-      yPos = drawWrappedField(page, label, value, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
-    }
-  }
-}
-
-    // === Notes only if provided ===
+    // === Notes and Remarks ===
     if (data.test.notes) {
       if (yPos - 100 < BOTTOM_MARGIN) {
         page = addNewPage(pdfDoc, pages)
@@ -275,7 +281,7 @@ for (const [section, fields] of sections) {
       yPos = drawNotes(page, data.test.notes, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
     }
 
-     if (data.test.remark) {
+    if (data.test.remark) {
       if (yPos - 100 < BOTTOM_MARGIN) {
         page = addNewPage(pdfDoc, pages)
         yPos = height - 80
@@ -283,7 +289,8 @@ for (const [section, fields] of sections) {
       yPos = drawSectionHeader(page, 'Remark', LEFT_MARGIN, yPos, boldFont)
       yPos = drawNotes(page, data.test.remark, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
     }
-    // === Footer (every page) ===
+
+    // === Footer (Every Page) ===
     for (let idx = 0; idx < pages.length; idx++) {
       const pg = pages[idx]
       pg.drawRectangle({
@@ -294,6 +301,7 @@ for (const [section, fields] of sections) {
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
       })
+
       if (data.qrCodeUrl) {
         const qrImage = await embedImageFromUrl(pdfDoc, data.qrCodeUrl)
         pg.drawImage(qrImage, { x: 40, y: 30, width: 60, height: 60 })
@@ -310,7 +318,27 @@ for (const [section, fields] of sections) {
         font,
       })
 
-      pg.drawText(`Page ${idx + 1} of ${pages.length}`, {
+      // === Two-line Address (Centered Footer) ===
+      const addressLine1 = 'Kothari Bhawan, 2nd Floor, Pitaliyon Ka Chowk,'
+      const addressLine2 = 'Johari Bazar, Jaipur.'
+      const addressWidth1 = boldFont.widthOfTextAtSize(addressLine1, 9)
+      const addressWidth2 = boldFont.widthOfTextAtSize(addressLine2, 9)
+      pg.drawText(addressLine1, {
+        x: (width - addressWidth1) / 2,
+        y: 60,
+        size: 9,
+        font,
+        color: rgb(0.3, 0.3, 0.3),
+      })
+      pg.drawText(addressLine2, {
+        x: (width - addressWidth2) / 2,
+        y: 52,
+        size: 9,
+        font,
+        color: rgb(0.3, 0.3, 0.3),
+      })
+
+        pg.drawText(`Page ${idx + 1} of ${pages.length}`, {
         x: width / 2 - 40,
         y: 28,
         size: 10,
@@ -318,6 +346,8 @@ for (const [section, fields] of sections) {
         color: rgb(0.3, 0.3, 0.3),
       })
 
+
+      // === Watermark ===
       if (data.logoUrl) {
         const logoImage = await embedImageFromUrl(pdfDoc, data.logoUrl)
         const dims = logoImage.scale(1)

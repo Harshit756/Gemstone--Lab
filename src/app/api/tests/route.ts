@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { generateReportPDF } from '@/lib/pdf-generator'
 import { requireAuth } from '@/lib/requireAuth'
 import { Console } from 'console'
-const logoUrl = "https://djstsb6rqhj6a2kj.public.blob.vercel-storage.com/logo.jpeg"
+const logoUrl = "https://djstsb6rqhj6a2kj.public.blob.vercel-storage.com/WhatsApp%20Image%202025-11-06%20at%201.56.53%20PM.jpeg"
 export async function POST(request: NextRequest) {
   const user = requireAuth(request)
 
