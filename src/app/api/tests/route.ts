@@ -4,6 +4,7 @@ import { generateReportPDF } from '@/lib/pdf-generator'
 import { requireAuth } from '@/lib/requireAuth'
 import { Console } from 'console'
 const logoUrl = "https://djstsb6rqhj6a2kj.public.blob.vercel-storage.com/WhatsApp%20Image%202025-11-06%20at%201.56.53%20PM.jpeg"
+const signUrl = "https://djstsb6rqhj6a2kj.public.blob.vercel-storage.com/WhatsApp%20Image%202025-11-06%20at%2011.44.35%20PM.jpeg"
 export async function POST(request: NextRequest) {
   const user = requireAuth(request)
 
@@ -59,7 +60,8 @@ export async function POST(request: NextRequest) {
         },
         qrCodeUrl: packet.qrCodePath,
         reportType: reportType || 'gemstone',
-        uploadedImage,logoUrl
+        uploadedImage,logoUrl,
+        signUrl:"https://djstsb6rqhj6a2kj.public.blob.vercel-storage.com/WhatsApp%20Image%202025-11-06%20at%2011.44.35%20PM.jpeg"
       })
       await prisma.report.create({ data: { packetId: parseInt(packetId), pdfPath } })
       return NextResponse.json({ test, reportGenerated: true, message: 'Test results saved and report generated successfully' })

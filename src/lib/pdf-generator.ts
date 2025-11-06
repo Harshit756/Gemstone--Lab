@@ -307,6 +307,12 @@ export async function generateReportPDF(data: any): Promise<string> {
         pg.drawImage(qrImage, { x: 40, y: 30, width: 60, height: 60 })
       }
 
+      if (data.signUrl) {
+      const signImage = await embedImageFromUrl(pdfDoc, data.signUrl)
+      pg.drawImage(signImage, { x: width - 140, y: 55, width: 80, height: 60 })
+      
+    }
+
       const sigName = 'Preeti Jhalani'
       const sigTitle = 'FGA'
       const sigNameWidth = boldFont.widthOfTextAtSize(sigName, 12)
