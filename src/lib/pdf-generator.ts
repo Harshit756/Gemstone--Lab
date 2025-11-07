@@ -289,15 +289,14 @@ export async function generateReportPDF(data: any): Promise<string> {
       yPos = drawSectionHeader(page, 'Remark', LEFT_MARGIN, yPos, boldFont)
       yPos = drawNotes(page, data.test.remark, LEFT_MARGIN, yPos, font, FIELD_WIDTH)
     }
-
-    // === Footer (Every Page) ===
+      
     for (let idx = 0; idx < pages.length; idx++) {
       const pg = pages[idx]
       pg.drawRectangle({
         x: 20,
-        y: 20,
+        y: 25,
         width: width - 40,
-        height: height - 40,
+        height: height - 45,
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
       })
@@ -366,6 +365,39 @@ export async function generateReportPDF(data: any): Promise<string> {
           opacity: 0.06,
         })
       }
+
+const importantNote =
+  'Important note: The conclusions on this gemstone report reflect our findings at the time it is issued. ' +
+  'A gemstone could be modified and/or enhanced at any time. Therefore, TGL can reconfirm at any time if a stone is in line with the Gemstone Report.'
+
+const noteFontSize = 8
+const noteColor = rgb(0.4, 0.4, 0.4)
+const noteMaxWidth = width - 80
+const words = importantNote.split(' ')
+let line = ''
+let noteY = 14 // positioned just below border
+const lineHeight = 9
+
+for (let i = 0; i < words.length; i++) {
+  const testLine = line ? line + ' ' + words[i] : words[i]
+  const testWidth = font.widthOfTextAtSize(testLine, noteFontSize)
+  if (testWidth > noteMaxWidth && line) {
+    pg.drawText(line, {
+      x: 40,
+      y: noteY,
+      size: noteFontSize,
+      font,
+      color: noteColor,
+    })
+    line = words[i]
+    noteY -= lineHeight
+  } else {
+    line = testLine
+  }
+}
+if (line) {
+  pg.drawText(line, { x: 40, y: noteY, size: noteFontSize, font, color: noteColor })
+}
     }
 
     // === Save & Upload ===
