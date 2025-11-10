@@ -324,7 +324,7 @@ export async function generateReportPDF(data: any): Promise<string> {
       })
 
       // === Two-line Address (Centered Footer) ===
-      const addressLine1 = 'Kothari Bhawan, 2nd Floor, Pitaliyon Ka Chowk,'
+      const addressLine1 = '1996, Kothari Bhawan, 2nd Floor, Pitaliyon Ka Chowk,'
       const addressLine2 = 'Johari Bazar, Jaipur.'
       const addressWidth1 = boldFont.widthOfTextAtSize(addressLine1, 9)
       const addressWidth2 = boldFont.widthOfTextAtSize(addressLine2, 9)
