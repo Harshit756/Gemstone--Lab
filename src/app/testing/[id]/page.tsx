@@ -55,7 +55,6 @@ interface Props {
 // ---------------- Dropdown values ---------------- //
 const dropdowns: Record<string, string[]> = {
   transparency: ['Transparent', 'Semi - Transparent', 'Translucent','Semi - Translucent', 'Opaque'],
-  opticCharacter: ['Uniaxial', 'Biaxial', 'Isotropic'],
   fluorescence: ['None', 'Faint', 'Medium', 'Strong', 'Very Strong'],
   cutGrade: ['Excellent', 'Very Good', 'Good', 'Fair', 'Poor'],
   colorGrade: ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'],
@@ -73,7 +72,7 @@ const reportFields: Record<string, string[]> = {
   
   diamond: [
     'carat', 'cut', 'color', 'clarity', 'measurements', 'cutGrade', 'colorGrade',
-    'clarityGrade', 'polish', 'symmetry', 'fluorescence', 'notes'
+    'clarityGrade', 'polish', 'symmetry', 'fluorescence', 'notes','remark'
   ],
   jewellery: [
     'weight', 'cuttingStyleCrown', 'cuttingStylePavilion', 'transparency',

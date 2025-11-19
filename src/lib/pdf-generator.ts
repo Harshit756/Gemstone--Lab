@@ -134,14 +134,25 @@ const REPORT_FIELDS: Record<string, [string, [string, string][]][]> = {
         ['Fluorescence', 'fluorescence'],
       ],
     ],
-  ],
-  origin: [
     [
       'Species & Origin',
       [
         ['Species', 'species'],
         ['Variety', 'variety'],
         ['Origin', 'origin'],
+      ],
+    ],
+  ],
+  jewellery: [
+    [
+      'Basic Information',
+      [
+        ['Shape', 'shape'],
+        ['Cutting Style Crown','cuttingStyleCrown'],
+        ['Weight', 'weight'],
+        ['Cutting Style', 'cuttingStylePavilion'],
+        ['Trasnparency','transparency'],
+        ['Dimension', 'dimension'],
       ],
     ],
   ],
@@ -273,6 +284,7 @@ export async function generateReportPDF(data: any): Promise<string> {
 
     // === Notes and Remarks ===
     if (data.test.notes) {
+      yPos -= 20;
       if (yPos - 100 < BOTTOM_MARGIN) {
         page = addNewPage(pdfDoc, pages)
         yPos = height - 80
