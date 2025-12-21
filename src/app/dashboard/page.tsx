@@ -37,7 +37,7 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       const response = await fetch('/api/packets')
-      const packets = await response.json()
+      const { packets } = await response.json()
 
       if (response.ok) {
         const totalPackets = packets.length
