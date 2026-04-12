@@ -12,9 +12,10 @@ export async function POST(request: NextRequest) {
     packetId, reportType, color, cut, clarity, carat, authenticity, notes, remark,
     measurements, weight, cuttingStyleCrown, cuttingStylePavilion,
     transparency, shape, dimension, opticCharacter, refractiveIndex,
-    specificGravity, magnification, species, variety, origin, colorGrade, beirefringence,
+    specificGravity, magnification, species, variety, origin, colorGrade, birefringence,
     clarityGrade, cutGrade, polish, symmetry, fluorescence, uploadedImage
   } = await request.json()
+
 
   if (!packetId || !reportType) {
     return NextResponse.json({ message: 'All required fields must be provided' }, { status: 400 })
@@ -30,14 +31,17 @@ export async function POST(request: NextRequest) {
     carat: carat || null,
     authenticity: authenticity || null,
    // notes: notes || null,
-    notes:JSON.stringify({
-      // 👈 make sure you added a `details Json` field in your Prisma schema
-      measurements, weight, cuttingStyleCrown, cuttingStylePavilion, remark,
-      transparency, shape, dimension, opticCharacter, refractiveIndex,
-      specificGravity, magnification, species, variety, origin,beirefringence,
-      colorGrade, clarityGrade, cutGrade, polish, symmetry, fluorescence,
-      reportType,notes
-    })
+   notes: JSON.stringify({
+  measurements, weight,cuttingStyleCrown,cuttingStylePavilion,remark,transparency,shape,
+  dimension,opticCharacter,refractiveIndex, specificGravity,magnification,species,
+  variety,origin,birefringence,colorGrade,clarityGrade,
+  cutGrade,polish,symmetry,fluorescence,
+  reportType,
+ // ✅ FIX 1: rename + sanitize
+  comments: String(notes || ''),
+  // ✅ FIX 2: ensure image stored properly
+  imageUrl: uploadedImage || null,
+})
   }
 })
     if (!packet) return NextResponse.json({ message: 'Packet not found' }, { status: 404 })
@@ -55,7 +59,7 @@ export async function POST(request: NextRequest) {
           color, cut, clarity, carat, authenticity, notes, remark, measurements,
           weight, cuttingStyleCrown, cuttingStylePavilion, transparency,
           shape, dimension, opticCharacter, refractiveIndex, specificGravity,
-          magnification, species, variety, origin, colorGrade, clarityGrade, beirefringence,
+          magnification, species, variety, origin, colorGrade, clarityGrade, birefringence,
           cutGrade, polish, symmetry, fluorescence
         },
         qrCodeUrl: packet.qrCodePath,

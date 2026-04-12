@@ -113,7 +113,7 @@ const REPORT_FIELDS: Record<string, [string, [string, string][]][]> = {
         ['Transparency', 'transparency'],
         ['Optic Character', 'opticCharacter'],
         ['Refractive Index', 'refractiveIndex'],
-        ['Beirefringence', 'beirefringence'],
+        ['Birefringence', 'birefringence'],
         ['Magnification', 'magnification'],
         ['Specific Gravity', 'specificGravity'],
         ['Species', 'species'],

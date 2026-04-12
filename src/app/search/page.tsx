@@ -22,7 +22,7 @@ export default function SearchPage() {
   const [error, setError] = useState('')
 
   /* =========================================================
-     FETCH ALL PACKETS ON PAGE LOAD
+     FETCH ALL PACKETS
      ========================================================= */
   const fetchAllPackets = async () => {
     setLoading(true)
@@ -35,7 +35,6 @@ export default function SearchPage() {
       if (response.ok) {
         let fetchedPackets = data.packets || []
 
-        // 🔒 Keep your existing business rule
         fetchedPackets = fetchedPackets.filter(
           (pkt: Packet) => pkt.reports.length > 0
         )
@@ -55,15 +54,12 @@ export default function SearchPage() {
     }
   }
 
-  /* =========================================================
-     RUN ON FIRST PAGE LOAD
-     ========================================================= */
   useEffect(() => {
     fetchAllPackets()
   }, [])
 
   /* =========================================================
-     SEARCH HANDLER (UNCHANGED)
+     SEARCH
      ========================================================= */
   const searchPackets = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,15 +97,43 @@ export default function SearchPage() {
   }
 
   /* =========================================================
-     DOWNLOAD REPORT
+     DOWNLOAD REPORT (UPDATED)
      ========================================================= */
-  const downloadReport = (reportPath: string, packetId: string) => {
-    const link = document.createElement('a')
-    link.href = reportPath
-    link.download = `report-${packetId}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  const downloadReport = async (
+    format: 'A4' | 'PVC',
+    reportPath: string,
+    packetId: string
+  ) => {
+    // ✅ A4 (unchanged)
+    if (format === 'A4') {
+      const link = document.createElement('a')
+      link.href = reportPath
+      link.download = `report-${packetId}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      return
+    }
+
+    // ✅ PVC (new)
+    try {
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          format: 'PVC',
+          packetId,
+        }),
+      })
+
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+
+      window.open(url, '_blank')
+    } catch (err) {
+      console.error(err)
+      alert('Failed to generate PVC report')
+    }
   }
 
   return (
@@ -119,7 +143,7 @@ export default function SearchPage() {
           Search & Track Packets
         </h1>
 
-        {/* SEARCH SECTION */}
+        {/* SEARCH */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Search Packets
@@ -186,17 +210,37 @@ export default function SearchPage() {
                   </div>
                 </div>
 
-                {/* REPORT BUTTONS */}
+                {/* REPORT BUTTONS (UPDATED) */}
                 <div className="mt-4 flex flex-wrap gap-3">
-                {packet.reports.map((report, index) => (
-  <button
-    key={report.id}
-    onClick={() => downloadReport(report.pdfPath, packet.uniqueId)}
-    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-  >
-    Download Report {index + 1}
-  </button>
-))}
+                  {packet.reports.map((report, index) => (
+                    <div key={report.id} className="flex gap-2">
+                      <button
+                        onClick={() =>
+                          downloadReport(
+                            'A4',
+                            report.pdfPath,
+                            packet.uniqueId
+                          )
+                        }
+                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                      >
+                        A4 Report
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          downloadReport(
+                            'PVC',
+                            report.pdfPath,
+                            packet.uniqueId
+                          )
+                        }
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                      >
+                        PVC Card
+                      </button>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="mt-4">
