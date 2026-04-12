@@ -45,7 +45,7 @@ interface TestData {
   polish?: string
   symmetry?: string
   fluorescence?: string
-  beirefringence?: string
+  birefringence?: string
 }
 
 interface Props {
@@ -66,7 +66,7 @@ const dropdowns: Record<string, string[]> = {
 // ---------------- Field mapping ---------------- //
 const reportFields: Record<string, string[]> = {
   gemstone: [
-   'shape','cut', 'dimension', 'weight', 'color', 'transparency', 'opticCharacter', 'refractiveIndex', 'beirefringence', 'specificGravity',  
+   'shape','cut', 'dimension', 'weight', 'color', 'transparency', 'opticCharacter', 'refractiveIndex', 'birefringence', 'specificGravity',  
    'magnification', 'species',  'variety', 'origin' ,'notes' , 'remark' 
   ],
   
