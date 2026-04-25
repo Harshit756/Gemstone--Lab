@@ -30,18 +30,18 @@ export async function POST(request: NextRequest) {
     clarity: clarity || null,
     carat: carat || null,
     authenticity: authenticity || null,
-   // notes: notes || null,
+    //notes: notes || null,
    notes: JSON.stringify({
   measurements, weight,cuttingStyleCrown,cuttingStylePavilion,remark,transparency,shape,
   dimension,opticCharacter,refractiveIndex, specificGravity,magnification,species,
   variety,origin,birefringence,colorGrade,clarityGrade,
   cutGrade,polish,symmetry,fluorescence,
-  reportType,
-}),
-comments: notes || null,
-imageUrl: uploadedImage || null,
-  }
+  reportType,comments: notes || "",
+imageUrl: uploadedImage || "",
+  })
+}
 })
+
     if (!packet) return NextResponse.json({ message: 'Packet not found' }, { status: 404 })
 
     try {
