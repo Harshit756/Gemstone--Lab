@@ -37,11 +37,9 @@ export async function POST(request: NextRequest) {
   variety,origin,birefringence,colorGrade,clarityGrade,
   cutGrade,polish,symmetry,fluorescence,
   reportType,
- // ✅ FIX 1: rename + sanitize
-  comments: String(notes || ''),
-  // ✅ FIX 2: ensure image stored properly
-  imageUrl: uploadedImage || null,
-})
+}),
+comments: notes || null,
+imageUrl: uploadedImage || null,
   }
 })
     if (!packet) return NextResponse.json({ message: 'Packet not found' }, { status: 404 })

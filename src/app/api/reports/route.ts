@@ -71,15 +71,14 @@ export async function POST(req: NextRequest) {
       // JSON fields
       weight: testData.weight || '',
       shape: testData.shape || '',
-      cut: testData.cuttingStyleCrown || '',
       measurements:
         testData.measurements || testData.dimension || '',
       transparency: testData.transparency || '',
 
       // DB fields
       color: test?.color || '',
-      identification: test?.authenticity || '',
-
+      //identification: test?.authenticity || '',
+       cut: test?.cut || '',
       // Comments (supports both notes & remark)
       comments: testData.comments || testData.remark || '',
 
