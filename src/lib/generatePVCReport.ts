@@ -1,33 +1,88 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
-// ✅ SAME IMAGE HELPER AS A4
+/* =========================
+   IMAGE HELPER
+========================= */
 async function embedImageFromUrl(pdfDoc: any, url: string) {
   const res = await fetch(url)
-  const imageBytes = new Uint8Array(await res.arrayBuffer())
+
+  if (!res.ok) {
+    throw new Error(`Image fetch failed: ${res.status} ${url}`)
+  }
+
+  const bytes = new Uint8Array(await res.arrayBuffer())
 
   const isPng =
-    imageBytes[0] === 0x89 &&
-    imageBytes[1] === 0x50 &&
-    imageBytes[2] === 0x4e &&
-    imageBytes[3] === 0x47
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
 
-  const isJpg = imageBytes[0] === 0xff && imageBytes[1] === 0xd8
+  const isJpg = bytes[0] === 0xff && bytes[1] === 0xd8
 
-  if (isPng) return await pdfDoc.embedPng(imageBytes)
-  if (isJpg) return await pdfDoc.embedJpg(imageBytes)
+  if (isPng) return await pdfDoc.embedPng(bytes)
+  if (isJpg) return await pdfDoc.embedJpg(bytes)
 
   throw new Error('Unsupported image format')
 }
 
+/* =========================
+   SAFE JSON PARSER (KEY FIX)
+========================= */
+function parseComments(comments: any) {
+  let parsed: any = {}
+
+  try {
+    // already object
+    if (typeof comments === 'object' && comments !== null) {
+      return comments
+    }
+
+    if (typeof comments === 'string') {
+      let str = comments.trim()
+
+      // fix double encoded JSON
+      if (str.startsWith('"') && str.endsWith('"')) {
+        str = JSON.parse(str)
+      }
+
+      parsed = JSON.parse(str)
+    }
+  } catch (e) {
+    console.error('Invalid comments JSON:', comments)
+  }
+
+  return parsed
+}
+
+/* =========================
+   MAIN FUNCTION
+========================= */
 export async function generatePVCReport(data: any) {
   const pdfDoc = await PDFDocument.create()
-
-  // ✅ PVC CARD SIZE
   const page = pdfDoc.addPage([242.65, 153.07])
   const { width, height } = page.getSize()
 
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+
+  /* =========================
+     PARSE COMMENTS (FIXED)
+  ========================= */
+  const parsed = parseComments(data.notes)
+
+  /* =========================
+     FIX URLS (relative → absolute)
+  ========================= */
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+
+  const fixUrl = (url: string) =>
+    url?.startsWith('http') ? url : url ? baseUrl + url : null
+
+  const imageUrl = fixUrl(data.imageUrl)
+  const logoUrl = fixUrl(data.logoUrl)
+  const qrUrl = fixUrl(data.qrCodeUrl)
 
   /* =========================
      BORDER
@@ -44,18 +99,25 @@ export async function generatePVCReport(data: any) {
   /* =========================
      LOGO
   ========================= */
-  if (data.logoUrl) {
+  if (logoUrl) {
     try {
-      const logo = await embedImageFromUrl(pdfDoc, data.logoUrl)
+      const logo = await embedImageFromUrl(pdfDoc, logoUrl)
       page.drawImage(logo, {
         x: 8,
         y: height - 30,
         width: 60,
         height: 20,
       })
-    } catch {}
+    } catch (e) {
+      console.error('Logo failed:', e)
+    }
   }
-
+   page.drawText('ISO 9001:2015', {
+    x: width - 55,
+    y: height - 20,
+    size: 5,
+  
+    })
   /* =========================
      TITLE
   ========================= */
@@ -67,7 +129,7 @@ export async function generatePVCReport(data: any) {
   })
 
   /* =========================
-     LEFT TEXT
+     LEFT DATA
   ========================= */
   let y = height - 55
   const gap = 8
@@ -85,61 +147,82 @@ export async function generatePVCReport(data: any) {
 
   drawRow('Report #', data.reportNumber)
   drawRow('Item', data.itemName)
-  drawRow('Weight', data.weight)
-  drawRow('Shape', data.shape)
-   drawRow('Cut', data.cut)
+  drawRow('Weight', data.weight || parsed.weight)
+  drawRow('Shape', data.shape || parsed.shape)
+  drawRow('Cut', data.cut || parsed.cut)
   drawRow('Measurements', data.measurements)
   drawRow('Color', data.color)
-  drawRow('Transparency', data.transparency)
+  drawRow('Transparency', data.transparency || parsed.transparency)
   drawRow('Identification', data.identification)
 
   /* =========================
-     COMMENTS
+     COMMENTS (CLEAN)
   ========================= */
-  page.drawText('Comments:', {
-    x: 10,
-    y: y - 2,
-    size: 6,
-    font: boldFont,
-  })
+const startY = y - 2
 
-  page.drawText(data.comments || '-', {
-    x: 10,
-    y: y - 10,
-    size: 6,
-    maxWidth: 130,
-    lineHeight: 7,
-    font,
-  })
+const label = 'Comments:'
+const labelWidth = boldFont.widthOfTextAtSize(label, 6)
 
+page.drawText(label, {
+  x: 10,
+  y: startY,
+  size: 6,
+  font: boldFont,
+})
+
+const commentText =
+  data.comments ||
+  [
+    parsed.remark && `Remark: ${parsed.remark}`,
+    parsed.weight && `Wt: ${parsed.weight}`,
+    parsed.transparency && `Trans: ${parsed.transparency}`,
+    parsed.shape && `Shape: ${parsed.shape}`,
+  ]
+    .filter(Boolean)
+    .join(', ') || '-'
+
+page.drawText(commentText, {
+  x: 10 + labelWidth + 4,
+  y: startY,
+  size: 6,
+  font,
+  maxWidth: width - (10 + labelWidth + 10),
+  lineHeight: 7,
+})
   /* =========================
      GEM IMAGE
   ========================= */
-  if (data.imageUrl) {
+  if (imageUrl) {
     try {
-      const img = await embedImageFromUrl(pdfDoc, data.imageUrl)
+      console.log('Loading image:', imageUrl)
+
+      const img = await embedImageFromUrl(pdfDoc, imageUrl)
       page.drawImage(img, {
         x: width - 60,
         y: 45,
         width: 50,
         height: 50,
       })
-    } catch {}
+    } catch (e) {
+      console.error('Image failed:', e)
+    }
   }
 
   /* =========================
      QR CODE
   ========================= */
-  if (data.qrCodeUrl) {
+  if (qrUrl) {
     try {
-      const qr = await embedImageFromUrl(pdfDoc, data.qrCodeUrl)
+      const qr = await embedImageFromUrl(pdfDoc, qrUrl)
       page.drawImage(qr, {
         x: width - 30,
         y: 5,
         width: 20,
         height: 20,
       })
-    } catch {}
+    } catch (e) {
+      console.error('QR failed:', e)
+    }
   }
 
   /* =========================

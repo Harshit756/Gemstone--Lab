@@ -41,7 +41,7 @@ model Test {
   clarity      String?  
   carat        String?  
   authenticity String?  
-  notes        String?  
+  notes        String?  @db.LongText
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   packet       Packet   @relation(fields: [packetId], references: [id], onDelete: Cascade)
