@@ -146,14 +146,14 @@ export async function generatePVCReport(data: any) {
   }
 
   drawRow('Report #', data.reportNumber)
-  drawRow('Item', data.itemName)
+  //drawRow('Item', data.itemName)
   drawRow('Weight', data.weight || parsed.weight)
   drawRow('Shape', data.shape || parsed.shape)
   drawRow('Cut', data.cut)
   drawRow('Measurements', data.measurements)
   drawRow('Color', data.color)
   drawRow('Transparency', data.transparency || parsed.transparency)
-  //drawRow('Identification', data.identification)
+  drawRow('Identification', data.identification)
 
   /* =========================
      COMMENTS (CLEAN)

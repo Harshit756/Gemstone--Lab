@@ -82,6 +82,10 @@ export async function POST(req: NextRequest) {
       // Comments (supports both notes & remark)
       comments: testData.comments || testData.remark || '',
 
+      identification: [testData.species, testData.variety]
+    .filter(Boolean)
+    .join(' / '),
+
       // Image (same key you store)
       imageUrl: testData.imageUrl || null,
 
