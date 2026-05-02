@@ -62,7 +62,6 @@ export async function generatePVCReport(data: any) {
   const pdfDoc = await PDFDocument.create()
   const page = pdfDoc.addPage([242.65, 153.07])
   const { width, height } = page.getSize()
-
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
@@ -104,9 +103,9 @@ export async function generatePVCReport(data: any) {
       const logo = await embedImageFromUrl(pdfDoc, logoUrl)
       page.drawImage(logo, {
         x: 8,
-        y: height - 30,
+        y: height - 35,
         width: 60,
-        height: 20,
+        height: 32,
       })
     } catch (e) {
       console.error('Logo failed:', e)
@@ -115,7 +114,7 @@ export async function generatePVCReport(data: any) {
    page.drawText('ISO 9001:2015', {
     x: width - 55,
     y: height - 20,
-    size: 5,
+    size: 7,
   
     })
   /* =========================
@@ -123,7 +122,7 @@ export async function generatePVCReport(data: any) {
   ========================= */
   page.drawText('GEMSTONE REPORT', {
     x: width - 160,
-    y: height - 40,
+    y: height - 20,
     size: 8,
     font: boldFont,
   })
@@ -132,14 +131,14 @@ export async function generatePVCReport(data: any) {
      LEFT DATA
   ========================= */
   let y = height - 55
-  const gap = 8
+  const gap = 9
 
   const drawRow = (label: string, value: string) => {
-    page.drawText(label, { x: 10, y, size: 6, font: boldFont })
+    page.drawText(label, { x: 10, y, size: 7, font: boldFont })
     page.drawText(`: ${value || '-'}`, {
-      x: 95,
+      x: 63,
       y,
-      size: 6,
+      size: 7,
       font,
     })
     y -= gap
