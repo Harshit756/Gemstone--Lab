@@ -224,8 +224,8 @@ export async function generateReportPDF(data: any): Promise<string> {
     })
     const infoY = height - 180
     page.drawText(`Report no: ${data.packet.uniqueId}`, { x: 45, y: infoY, size: 12, font })
-    page.drawText(`Customer: ${data.packet.customerName}`, { x: 45, y: infoY - 20, size: 12, font })
-    page.drawText(`Gemstone: ${data.packet.gemstoneType}`, { x: 45, y: infoY - 40, size: 12, font })
+    //page.drawText(`Customer: ${data.packet.customerName}`, { x: 45, y: infoY - 20, size: 12, font })
+    page.drawText(`Gemstone: ${data.packet.gemstoneType}`, { x: 45, y: infoY - 20, size: 12, font })
     const dateText = `Date: ${new Date(data.packet.dateReceived).toLocaleDateString()}`
     const dateWidth = font.widthOfTextAtSize(dateText, 12)
     page.drawText(dateText, { x: width - 60 - dateWidth, y: infoY, size: 12, font })
